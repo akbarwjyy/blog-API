@@ -16,10 +16,33 @@ exports.createPost = async (req, res) => {
 
 exports.getAllPosts = async (req, res) => {
   try {
-    const posts = await Post.find().populate("author", "username");
-    res.json(posts);
+    const { page = 1, limit = 10, search = "" } = req.query;
+
+    const query = {
+      $or: [
+        { title: { $regex: search, $options: "i" } },
+        { content: { $regex: search, $options: "i" } },
+      ],
+    };
+
+    const total = await Post.countDocuments(query);
+    const posts = await Post.find(query)
+      .populate("author", "username")
+      .limit(parseInt(limit))
+      .skip((parseInt(page) - 1) * parseInt(limit))
+      .sort({ createdAt: -1 });
+
+    res.json({
+      total,
+      page: parseInt(page),
+      limit: parseInt(limit),
+      totalPages: Math.ceil(total / limit),
+      posts,
+    });
   } catch (err) {
-    res.status(500).json({ message: "Gagal mengambil post" });
+    res
+      .status(500)
+      .json({ message: "Gagal mengambil post", error: err.message });
   }
 };
 
