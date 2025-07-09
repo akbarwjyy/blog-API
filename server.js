@@ -11,6 +11,8 @@ const app = express();
 // Middleware untuk parsing JSON body
 app.use(express.json());
 
+app.use("/uploads", express.static("uploads"));
+
 // Koneksi MongoDB
 mongoose
   .connect(process.env.MONGO_URI)

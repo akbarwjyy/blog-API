@@ -97,3 +97,28 @@ exports.deletePost = async (req, res) => {
       .json({ message: "Gagal menghapus post", error: err.message });
   }
 };
+
+exports.uploadCover = async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id);
+    if (!post) return res.status(404).json({ message: "Post tidak ditemukan" });
+
+    // Cek pemilik post
+    if (post.author.toString() !== req.user.id) {
+      return res
+        .status(403)
+        .json({ message: "Tidak diizinkan mengubah post ini" });
+    }
+
+    // Simpan path file ke post
+    post.coverImage = req.file.path; // misalnya: uploads/1720128498433.png
+    await post.save();
+
+    res.json({
+      message: "Cover berhasil diupload",
+      coverImage: post.coverImage,
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Gagal upload cover", error: err.message });
+  }
+};

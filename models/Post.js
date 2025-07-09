@@ -15,6 +15,10 @@ const postSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+    coverImage: {
+      type: String, // path lokal ke file gambar
+      default: "",
+    },
   },
   { timestamps: true }
 );
