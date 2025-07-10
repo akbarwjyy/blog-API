@@ -8,7 +8,7 @@ module.exports = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded; // data user bisa dipakai di controller
+    req.user = decoded; // decoded harus berisi: { id, username, role }
     next();
   } catch (err) {
     res.status(403).json({ message: "Token tidak valid" });

@@ -84,13 +84,17 @@ exports.deletePost = async (req, res) => {
     const post = await Post.findById(req.params.id);
     if (!post) return res.status(404).json({ message: "Post tidak ditemukan" });
 
-    // Cek kepemilikan
-    if (post.author.toString() !== req.user.id) {
-      return res.status(403).json({ message: "Tidak diizinkan" });
+    const isOwner = post.author.toString() === req.user.id;
+    const isAdmin = req.user.role === "admin";
+
+    if (!isOwner && !isAdmin) {
+      return res
+        .status(403)
+        .json({ message: "Kamu tidak punya izin untuk menghapus post ini" });
     }
 
     await post.deleteOne();
-    res.json({ message: "Post dihapus" });
+    res.json({ message: "Post berhasil dihapus" });
   } catch (err) {
     res
       .status(500)
