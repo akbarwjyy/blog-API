@@ -19,6 +19,12 @@ const postSchema = new mongoose.Schema(
       type: String, // path lokal ke file gambar
       default: "",
     },
+    likes: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
   },
   { timestamps: true }
 );

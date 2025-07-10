@@ -16,5 +16,6 @@ router.post(
   upload.single("cover"),
   postController.uploadCover
 );
+router.post("/:id/like", authMiddleware, postController.toggleLike);
 
 module.exports = router;
