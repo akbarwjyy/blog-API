@@ -15,6 +15,20 @@ const generateToken = (user) => {
   );
 };
 
+const generateAccessToken = (user) => {
+  return jwt.sign(
+    { id: user._id, username: user.username, role: user.role },
+    process.env.JWT_SECRET,
+    { expiresIn: "1h" }
+  );
+};
+
+const generateRefreshToken = (user) => {
+  return jwt.sign({ id: user._id }, process.env.JWT_REFRESH_SECRET, {
+    expiresIn: "7d",
+  });
+};
+
 exports.register = async (req, res) => {
   const { username, password } = req.body;
   try {
@@ -52,10 +66,22 @@ exports.login = async (req, res) => {
     const match = await bcrypt.compare(password, user.password);
     if (!match) return res.status(400).json({ message: "Password salah" });
 
-    const token = generateToken(user);
+    const accessToken = generateAccessToken(user);
+    const refreshToken = generateRefreshToken(user);
+
+    user.refreshToken = refreshToken;
+    await user.save();
+
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: false, // ubah ke true jika pakai https
+      path: "/api/auth/refresh",
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 hari
+    });
+
     res.json({
       message: "Login berhasil",
-      token,
+      accessToken,
       user: {
         username: user.username,
         role: user.role,
@@ -63,5 +89,25 @@ exports.login = async (req, res) => {
     });
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
+exports.refresh = async (req, res) => {
+  const token = req.cookies.refreshToken;
+  if (!token)
+    return res.status(401).json({ message: "Refresh token tidak ada" });
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
+    const user = await User.findById(decoded.id);
+
+    if (!user || user.refreshToken !== token) {
+      return res.status(403).json({ message: "Refresh token tidak valid" });
+    }
+
+    const newAccessToken = generateAccessToken(user);
+    res.json({ accessToken: newAccessToken });
+  } catch (err) {
+    res.status(403).json({ message: "Refresh token tidak valid" });
   }
 };

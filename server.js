@@ -7,6 +7,7 @@ const rateLimit = require("express-rate-limit");
 const authRoutes = require("./routes/authRoutes");
 const postRoutes = require("./routes/postRoutes");
 const commentRoutes = require("./routes/commentRoutes");
+const cookieParser = require("cookie-parser");
 
 dotenv.config();
 const app = express();
@@ -18,6 +19,9 @@ app.use("/uploads", express.static("uploads"));
 
 // Helmet - set HTTP security headers
 app.use(helmet());
+
+// Cookie parser - untuk mengakses cookies
+app.use(cookieParser());
 
 // CORS - batasi asal permintaan
 app.use(
