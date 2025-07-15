@@ -131,7 +131,7 @@ exports.logout = async (req, res) => {
   const token = req.cookies.refreshToken;
 
   if (!token)
-    return res.status(204).json({ message: "Tidak ada token untuk logout" });
+    return res.status(400).json({ message: "Tidak ada token untuk logout" });
 
   try {
     const user = await User.findOne({ refreshToken: token });
@@ -142,7 +142,7 @@ exports.logout = async (req, res) => {
     }
 
     res.clearCookie("refreshToken", { path: "/api/auth/refresh" });
-    res.status(200).json({ message: "Logout berhasil" }); // ✅ PASTIKAN INI ADA
+    res.status(200).json({ message: "Logout berhasil" });
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
   }
