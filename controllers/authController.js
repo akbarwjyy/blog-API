@@ -128,13 +128,34 @@ exports.refresh = async (req, res) => {
 };
 
 exports.logout = async (req, res) => {
-  const token = req.cookies.refreshToken;
+  // Coba ambil dari cookie dulu, jika tidak ada coba dari header
+  let token = req.cookies.refreshToken;
+
+  // Jika tidak ada di cookie, coba ambil dari Authorization header
+  if (!token) {
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      token = authHeader.substring(7); // Ambil token tanpa 'Bearer '
+    }
+  }
 
   if (!token)
     return res.status(400).json({ message: "Tidak ada token untuk logout" });
 
   try {
-    const user = await User.findOne({ refreshToken: token });
+    // Untuk refresh token dari cookie
+    let user = await User.findOne({ refreshToken: token });
+
+    // Jika tidak ditemukan dan token dari header, coba cari berdasarkan access token
+    if (!user && req.headers.authorization) {
+      try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        user = await User.findById(decoded.id);
+      } catch (jwtErr) {
+        // Jika gagal verify sebagai access token, lanjut ke pengecekan sebagai refresh token
+        user = await User.findOne({ refreshToken: token });
+      }
+    }
 
     if (user) {
       user.refreshToken = null;
